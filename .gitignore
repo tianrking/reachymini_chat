@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Environment variables
+.env
+
+# uv
+uv.lock
+# (Note: keeping uv.lock is usually recommended for apps, but for a template 
+# or if you want fresh installs you could ignore it. User asked for uv usage, so we keep consistency)
+
+# OS
+.DS_Store
+Thumbs.db

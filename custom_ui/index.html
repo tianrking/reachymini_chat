@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seeed Studio AI Bot</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <script type="module" crossorigin src="./assets/index-DLrHYund.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CLuiFqWA.css">
+  <style>
+    :root {
+      --primary: #00D26A;
+      --primary-glow: rgba(0, 210, 106, 0.4);
+      --bg: #050505;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Animated Background Orbs */
+    #landing-page {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, sans-serif;
+      transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), visibility 1s;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: 0;
+      opacity: 0.3;
+      animation: float 20s infinite alternate ease-in-out;
+    }
+
+    .orb-1 {
+      width: 400px;
+      height: 400px;
+      background: #00D26A;
+      top: -100px;
+      right: -100px;
+    }
+
+    .orb-2 {
+      width: 300px;
+      height: 300px;
+      background: #0081ff;
+      bottom: -50px;
+      left: -50px;
+      animation-delay: -5s;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translate(0, 0);
+      }
+
+      100% {
+        transform: translate(100px, 50px);
+      }
+    }
+
+    #landing-page.fade-out {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .content-wrapper {
+      position: relative;
+      z-index: 10;
+      width: 90%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .glass-main {
+      background: var(--card-bg);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      padding: 3.5rem;
+      border-radius: 40px;
+      border: 1px solid var(--border);
+      box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
+      text-align: center;
+      margin-bottom: 2.5rem;
+      width: 100%;
+      animation: reveal 1s ease-out;
+    }
+
+    .seeed-logo-wrap {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 1.5rem;
+      position: relative;
+    }
+
+    .seeed-logo-wrap::after {
+      content: '';
+      position: absolute;
+      inset: -10px;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      opacity: 0.2;
+      animation: ripple 2s infinite;
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(1);
+        opacity: 0.5;
+      }
+
+      100% {
+        transform: scale(1.5);
+        opacity: 0;
+      }
+    }
+
+    .title {
+      font-size: 3.5rem;
+      font-weight: 900;
+      margin: 0;
+      background: linear-gradient(135deg, #fff 30%, var(--primary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -2px;
+    }
+
+    .subtitle {
+      color: #999;
+      font-size: 1.2rem;
+      margin: 1.5rem 0 2.5rem;
+      max-width: 600px;
+      margin-inline: auto;
+    }
+
+    /* Architecture Grid */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.2rem;
+      width: 100%;
+      animation: reveal 1s ease-out 0.2s backwards;
+    }
+
+    .tech-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      padding: 1.2rem;
+      border-radius: 20px;
+      text-align: left;
+      transition: all 0.3s ease;
+    }
+
+    .tech-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--primary);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px var(--primary-glow);
+    }
+
+    .tech-label {
+      font-size: 0.75rem;
+      color: var(--primary);
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+      display: block;
+    }
+
+    .tech-name {
+      font-size: 1rem;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .tech-desc {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.2rem;
+    }
+
+    .launch-btn {
+      background: var(--primary);
+      color: #000;
+      border: none;
+      padding: 1.2rem 3.5rem;
+      border-radius: 100px;
+      font-weight: 800;
+      font-size: 1.2rem;
+      cursor: pointer;
+      margin-top: 2rem;
+      transition: all 0.3s ease;
+      animation: reveal 1s ease-out 0.4s backwards;
+    }
+
+    .launch-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 20px 40px var(--primary-glow);
+    }
+
+    @keyframes reveal {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .tech-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .title {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="landing-page">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="content-wrapper">
+      <div class="glass-main">
+        <div class="seeed-logo-wrap">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="45" stroke="#00D26A" stroke-width="6" />
+            <path d="M30 50L45 65L70 35" stroke="#00D26A" stroke-width="8" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+        <h1 class="title">Seeed Studio AI</h1>
+        <p class="subtitle">Next-generation Voice AI Engine. Low-latency, ultra-natural, and developer-friendly.</p>
+
+        <div class="tech-grid">
+          <div class="tech-card">
+            <span class="tech-label">STT</span>
+            <div class="tech-name">Deepgram</div>
+            <div class="tech-desc">Real-time Speech</div>
+          </div>
+          <div class="tech-card">
+            <span class="tech-label">LLM</span>
+            <div class="tech-name">GLM-4</div>
+            <div class="tech-desc">Agentic Logic</div>
+          </div>
+          <div class="tech-card">
+            <span class="tech-label">TTS</span>
+            <div class="tech-name">Cartesia</div>
+            <div class="tech-desc">Expressive Voice</div>
+          </div>
+          <div class="tech-card">
+            <span class="tech-label">Engine</span>
+            <div class="tech-name">Pipecat</div>
+            <div class="tech-desc">The AI Orchestrator</div>
+          </div>
+        </div>
+
+        <button class="launch-btn" onclick="enterApp()">Launch Interface</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function enterApp() {
+      const lp = document.getElementById('landing-page');
+      lp.classList.add('fade-out');
+    }
+  </script>
+
+  <div id="root"></div>
+</body>
+
+</html>
