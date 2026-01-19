@@ -1,0 +1,11 @@
+[project]
+name = "reachymini-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.121.3",
+    "reachy-mini>=1.2.11",
+    "uvicorn>=0.40.0",
+]

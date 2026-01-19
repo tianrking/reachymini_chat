@@ -1,8 +1,8 @@
 # Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.so
 .Python
 build/
 develop-eggs/
@@ -20,19 +20,24 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
-.venv/
-venv/
-ENV/
+# Virtual Environments (Root and Backend)
+**/.venv/
+**/venv/
+**/ENV/
 
 # Environment variables
 .env
+**/reachymini_backend/.env
 
 # uv
-uv.lock
-# (Note: keeping uv.lock is usually recommended for apps, but for a template 
-# or if you want fresh installs you could ignore it. User asked for uv usage, so we keep consistency)
+# Depending on preference, you might want to commit uv.lock for reproducibility.
+# For this repo, we keep it ignored to allow fresh syncs in different environments.
+**/uv.lock
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Project Specific
+.python-version
+**/reachymini_backend/.python-version

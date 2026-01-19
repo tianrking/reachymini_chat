@@ -27,10 +27,9 @@ from loguru import logger
 print("🚀 Starting Pipecat bot...")
 print("⏳ Loading models and imports (20 seconds, first run only)\n")
 
-logger.info("Loading Local Smart Turn Analyzer V3...")
-from pipecat.audio.turn.smart_turn.local_smart_turn_v3 import LocalSmartTurnAnalyzerV3
-
-logger.info("✅ Local Smart Turn Analyzer V3 loaded")
+# logger.info("Loading Local Smart Turn Analyzer V3...")
+# from pipecat.audio.turn.smart_turn.local_smart_turn_v3 import LocalSmartTurnAnalyzerV3
+# logger.info("✅ Local Smart Turn Analyzer V3 loaded")
 logger.info("Loading Silero VAD model...")
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 
@@ -104,11 +103,7 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
     context = LLMContext(messages)
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
         context,
-        user_params=LLMUserAggregatorParams(
-            user_turn_strategies=UserTurnStrategies(
-                stop=[TurnAnalyzerUserTurnStopStrategy(turn_analyzer=LocalSmartTurnAnalyzerV3())]
-            ),
-        ),
+        user_params=LLMUserAggregatorParams(),
     )
 
     rtvi = RTVIProcessor()
