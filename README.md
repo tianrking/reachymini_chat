@@ -42,11 +42,6 @@ uv run bot.py
 ### 修改 UI
 前端静态资源存放在 `custom_ui` 目录下。你可以修改 `custom_ui/index.html` 来调整引导页或对话界面的布局。
 
-### 修改品牌名称
-本项目包含一个 `rename_ui.py` 脚本，可快速批量修改 UI 中的品牌描述：
-```bash
-python3 rename_ui.py
-```
 
 ## 技术架构
 本项目采用模块化管道设计：
