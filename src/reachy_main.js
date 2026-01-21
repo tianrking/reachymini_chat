@@ -114,6 +114,12 @@ export class MuJoCoDemo {
         this.gui = new GUI();
         setupGUI(this);
 
+        // Remove "Example Scene" dropdown to restrict to Reachy Mini
+        const sceneCtrl = this.gui.controllers.find(c => c._name === 'Example Scene');
+        if (sceneCtrl) {
+            sceneCtrl.destroy();
+        }
+
         // Custom GUI Organization for Reachy
         // We can add a folder for specific Reachy controls if we knew the joint names better,
         // but setupGUI already creates an "Actuators" folder.
