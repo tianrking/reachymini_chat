@@ -39,6 +39,9 @@ export class MuJoCoDemo {
         this.tmpQuat = new THREE.Quaternion();
         this.updateGUICallbacks = [];
 
+        // MQTT Flag to prevent feedback loops
+        this.isReceivingMqtt = false;
+
         this.container = document.createElement('div');
         document.body.appendChild(this.container);
 
@@ -114,6 +117,12 @@ export class MuJoCoDemo {
         this.gui = new GUI();
         setupGUI(this);
 
+        // Hook into GUI for MQTT Sync
+        this.hookActuatorGUI();
+        this.updateGUICallbacks.push(() => {
+            this.hookActuatorGUI();
+        });
+
         // Remove "Example Scene" dropdown to restrict to Reachy Mini
         const sceneCtrl = this.gui.controllers.find(c => c._name === 'Example Scene');
         if (sceneCtrl) {
@@ -164,21 +173,32 @@ export class MuJoCoDemo {
 
                     this.mqttClient.on('message', (topic, message) => {
                         // Handle control messages
-                        // Expected format: { ctrl: [v1, v2, ...] }
                         try {
-                            const data = JSON.parse(message.toString());
-                            if (data.ctrl && this.data) {
-                                for (let i = 0; i < Math.min(data.ctrl.length, this.data.ctrl.length); i++) {
-                                    // Assuming remote control sends full ctrl array
-                                    // We can directly apply to data.ctrl
-                                    // Note: this overrides local physics simulation constraints if we are not careful
-                                    // But for simple position control actuators it behaves like a target
-                                    this.data.ctrl[i] = data.ctrl[i];
-                                    this.params["Actuator " + i] = data.ctrl[i]; // Update GUI
+                            const payload = JSON.parse(message.toString());
+                            // Sync External -> Internal
+                            if (payload.ctrl && this.data) {
+                                this.isReceivingMqtt = true; // Prevent feedback loop
+
+                                const actFolder = this.gui.folders.find(f => f._title === "Actuators");
+                                const controllers = actFolder ? actFolder.controllers : [];
+
+                                for (let i = 0; i < Math.min(payload.ctrl.length, this.data.ctrl.length); i++) {
+                                    // Update Physics
+                                    this.data.ctrl[i] = payload.ctrl[i];
+
+                                    // Update GUI (if matched)
+                                    // Assuming 1:1 mapping between ctrl index and controller index
+                                    if (i < controllers.length) {
+                                        // check if value effectively changed to avoid redundant updates?
+                                        // setValue triggers onChange, which we have caught.
+                                        controllers[i].setValue(payload.ctrl[i]);
+                                    }
                                 }
+                                this.isReceivingMqtt = false;
                             }
                         } catch (e) {
                             console.error("MQTT Message Error:", e);
+                            this.isReceivingMqtt = false;
                         }
                     });
 
@@ -203,13 +223,50 @@ export class MuJoCoDemo {
 
 
         // Custom GUI Organization for Reachy
-        // We can add a folder for specific Reachy controls if we knew the joint names better,
-        // but setupGUI already creates an "Actuators" folder.
-        // Let's open it by default for better UX.
         const actuatorsFolder = this.gui.folders.find(f => f._title === "Actuators");
         if (actuatorsFolder) {
             actuatorsFolder.open();
         }
+    }
+
+    hookActuatorGUI() {
+        const actFolder = this.gui.folders.find(f => f._title === "Actuators");
+        if (!actFolder) return;
+
+        actFolder.controllers.forEach((controller) => {
+            // Save original onChange if needed, but lil-gui overwrites it.
+            // But we know mujocoUtils sets it to update data.ctrl.
+            // We must PRESERVE that behavior.
+
+            // lil-gui stores the callback in `_onChange`.
+            const originalOnChange = controller._onChange;
+
+            controller.onChange((value) => {
+                // 1. Run original physics update
+                if (originalOnChange) {
+                    originalOnChange.call(controller, value);
+                }
+
+                // 2. Publish Sync (Internal -> External)
+                // Only if NOT currently applying an external update
+                if (!this.isReceivingMqtt && this.mqttClient && this.mqttClient.connected) {
+                    this.publishCommand();
+                }
+            });
+        });
+    }
+
+    publishCommand() {
+        if (!this.data) return;
+        const cmd = {
+            time: this.data.time,
+            ctrl: Array.from(this.data.ctrl) // Send full control array
+        };
+        // Publish to CMD topic? Or separate Manual topic?
+        // User requested "sync". If we publish to CMD, other listeners will receive it.
+        // This allows controlling other clients.
+        const topic = `reachy/${this.mqttParams.robotId}/cmd`;
+        this.mqttClient.publish(topic, JSON.stringify(cmd));
     }
 
     onWindowResize() {
@@ -342,9 +399,6 @@ async function downloadReachyAssets(mujoco) {
         const config = await response.json();
         const allFiles = config.assets;
 
-        // Optimally, fetch these in parallel
-        // For larger lists, we might want to batch this to avoid browser limits, 
-        // but ~50 files is usually fine.
         let requests = allFiles.map((url) => fetch("./assets/" + url));
         let responses = await Promise.all(requests);
 
