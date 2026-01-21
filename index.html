@@ -2,12 +2,12 @@
 <html lang="en">
 
 <head>
-    <title>MuJoCo Reachy Mini Demo</title>
+    <title>MuJoCo Reachy Mini</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no, shrink-to-fit=0">
     <meta name="theme-color" content="#1a202c">
-    <link rel="icon" type="image/x-icon" href="./assets/favicon.png">
+    <!-- <link rel="icon" type="image/x-icon" href="./assets/favicon.png"> -->
 
     <!-- Google Fonts for Tech Look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -141,6 +141,55 @@
             /* Ensure controls are clickable */
         }
 
+        /* Keyframes for the pulse effect */
+        @keyframes pulse-blue {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.4);
+                border-color: rgba(0, 242, 255, 0.3);
+            }
+
+            70% {
+                box-shadow: 0 0 10px 0 rgba(0, 242, 255, 0);
+                border-color: rgba(0, 242, 255, 0.8);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 242, 255, 0);
+                border-color: rgba(0, 242, 255, 0.3);
+            }
+        }
+
+        /* Ensure specificity beats #ui-layer * */
+        #ui-layer .wiki-link {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 11px;
+            color: #00f2ff;
+            text-decoration: none;
+            text-transform: uppercase;
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: auto !important;
+            /* enable click */
+            transition: all 0.2s ease;
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
+            /* Ensure it has a hit area */
+            animation: pulse-blue 2s infinite;
+            /* Add the animation */
+        }
+
+        #ui-layer .wiki-link:hover {
+            background: rgba(0, 242, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.5);
+            /* Stronger glow on hover */
+            cursor: pointer;
+            animation: none;
+            /* Stop pulsing on hover so it stays lit */
+            border-color: #00f2ff;
+        }
+
         /* Just in case we have orbit controls issues, ensure container is sized */
         #appbody {
             position: absolute;
@@ -168,6 +217,9 @@
             <div class="title-block">
                 <h1>Reachy Mini</h1>
                 <h2>Digital Twin Simulation</h2>
+                <a href="https://wiki.seeedstudio.com/reachymini_getting_started/" target="_blank" class="wiki-link">
+                    Documentation
+                </a>
             </div>
         </div>
 
