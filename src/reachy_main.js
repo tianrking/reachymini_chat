@@ -120,6 +120,88 @@ export class MuJoCoDemo {
             sceneCtrl.destroy();
         }
 
+        // --- MQTT Remote Control Setup ---
+        this.mqttClient = null;
+        this.mqttParams = {
+            robotId: "reachy_1",
+            brokerUrl: 'wss://broker.emqx.io:8084/mqtt',
+            status: "Disconnected",
+            connect: async () => {
+                if (this.mqttClient && this.mqttClient.connected) {
+                    this.mqttClient.end();
+                    this.mqttParams.status = "Disconnected";
+                    connectCtrl.name("Connect MQTT");
+                    return;
+                }
+
+                this.mqttParams.status = "Connecting...";
+
+                try {
+                    const mqttModule = await import('mqtt');
+                    const mqtt = mqttModule.default || mqttModule;
+
+                    console.log(`Connecting to ${this.mqttParams.brokerUrl} as ${this.mqttParams.robotId}...`);
+
+                    if (typeof mqtt.connect !== 'function') {
+                        throw new Error(`mqtt.connect is not a function. Keys: ${Object.keys(mqtt)}`);
+                    }
+
+                    this.mqttClient = mqtt.connect(this.mqttParams.brokerUrl);
+
+                    this.mqttClient.on('connect', () => {
+                        console.log("MQTT Connected!");
+                        this.mqttParams.status = "Connected";
+                        connectCtrl.name("Disconnect MQTT");
+
+                        // Subscribe to control topic
+                        const topic = `reachy/${this.mqttParams.robotId}/cmd`;
+                        this.mqttClient.subscribe(topic, (err) => {
+                            if (!err) {
+                                console.log(`Subscribed to ${topic}`);
+                            }
+                        });
+                    });
+
+                    this.mqttClient.on('message', (topic, message) => {
+                        // Handle control messages
+                        // Expected format: { ctrl: [v1, v2, ...] }
+                        try {
+                            const data = JSON.parse(message.toString());
+                            if (data.ctrl && this.data) {
+                                for (let i = 0; i < Math.min(data.ctrl.length, this.data.ctrl.length); i++) {
+                                    // Assuming remote control sends full ctrl array
+                                    // We can directly apply to data.ctrl
+                                    // Note: this overrides local physics simulation constraints if we are not careful
+                                    // But for simple position control actuators it behaves like a target
+                                    this.data.ctrl[i] = data.ctrl[i];
+                                    this.params["Actuator " + i] = data.ctrl[i]; // Update GUI
+                                }
+                            }
+                        } catch (e) {
+                            console.error("MQTT Message Error:", e);
+                        }
+                    });
+
+                    this.mqttClient.on('error', (err) => {
+                        console.error("MQTT Error:", err);
+                        this.mqttParams.status = "Error";
+                    });
+
+                } catch (e) {
+                    console.error("Failed to load MQTT:", e);
+                    this.mqttParams.status = "Load Failed";
+                }
+            }
+        };
+
+        const mqttFolder = this.gui.addFolder("Remote Control (MQTT)");
+        mqttFolder.add(this.mqttParams, 'robotId').name("Robot ID");
+        mqttFolder.add(this.mqttParams, 'brokerUrl').name("Broker URL");
+        mqttFolder.add(this.mqttParams, 'status').name("Status").listen().disable();
+        const connectCtrl = mqttFolder.add(this.mqttParams, 'connect').name("Connect MQTT");
+        mqttFolder.open();
+
+
         // Custom GUI Organization for Reachy
         // We can add a folder for specific Reachy controls if we knew the joint names better,
         // but setupGUI already creates an "Actuators" folder.
@@ -231,6 +313,21 @@ export class MuJoCoDemo {
             }
         }
 
+        // --- MQTT Publish State ---
+        if (this.mqttClient && this.mqttClient.connected) {
+            const now = performance.now();
+            if (!this._lastMqttPub) this._lastMqttPub = 0;
+            if (now - this._lastMqttPub > 33) { // ~30Hz
+                this._lastMqttPub = now;
+                const state = {
+                    time: this.data.time,
+                    qpos: Array.from(this.data.qpos)
+                };
+                const topic = `reachy/${this.mqttParams.robotId}/state`;
+                this.mqttClient.publish(topic, JSON.stringify(state));
+            }
+        }
+
         // Draw Tendons and Flex verts
         drawTendonsAndFlex(this.mujocoRoot, this.model, this.data);
 
@@ -279,4 +376,3 @@ async function downloadReachyAssets(mujoco) {
 
 let demo = new MuJoCoDemo();
 await demo.init();
-
