@@ -37,6 +37,7 @@ from pipecat.turns.user_turn_strategies import UserTurnStrategies
 
 # Import debug helper
 from debug_helper import ImageSaver, VisionRTVIProcessor
+from tools import register_tools
 
 # Load custom UI
 from fastapi.staticfiles import StaticFiles
@@ -54,45 +55,7 @@ load_dotenv(override=True)
 
 
 
-async def fetch_user_image(params: FunctionCallParams):
-    """Fetch the user image and push it to the LLM.
 
-    When called, this function pushes a UserImageRequestFrame upstream to the
-    transport. As a result, the transport will request the user image and push a
-    UserImageRawFrame downstream which will be added to the context by the LLM
-    assistant aggregator.
-    """
-    user_id = params.arguments.get("user_id")
-    # If user_id is missing/None, we might still want to try capturing "the user"
-    # But UserImageRequestFrame requires a user_id if we want to target a specific participant.
-    # In local WebRTC, usually there's only one peer.
-    
-    question = params.arguments.get("question", "What do you see in this image?")
-    video_source = params.arguments.get("video_source", "camera")
-    logger.debug(f"Requesting image with user_id={user_id}, question={question}, source={video_source}")
-
-    # Request a user image frame and indicate that it should be added to the
-    # context. Also associate it to the function call.
-    # DEBUG: We can't easily intercept the *resulting* frame here in the function call 
-    # because this function just *requests* it. The Transport handles the actual capture 
-    # and pushes the UserImageRawFrame downstream.
-    # To debug what is being seen, we rely on the fact that Pipecat transports generally 
-    # work correct. However, if 'UserImageRawFrame' is what flows through the pipeline,
-    # maybe we can add a simple FrameProcessor to sniffer/save it?
-    
-    await params.llm.push_frame(
-        UserImageRequestFrame(
-            user_id=user_id,
-            text=question,
-            video_source=video_source,
-            append_to_context=True,
-            function_name=params.function_name,
-            tool_call_id=params.tool_call_id,
-        ),
-        FrameDirection.UPSTREAM,
-    )
-
-    await params.result_callback(None)
 
 
 # We store functions so objects (e.g. SileroVADAnalyzer) don't get
@@ -137,33 +100,14 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
         # Note: 'thinking' param removed for compatibility
     )
     
-    llm.register_function("fetch_user_image", fetch_user_image)
+    # Register tools
+    tool_schemas = register_tools(llm)
 
     @llm.event_handler("on_function_calls_started")
     async def on_function_calls_started(service, function_calls):
         await tts.queue_frame(TTSSpeakFrame("Okay, let me take a look."))
 
-    fetch_image_function = FunctionSchema(
-        name="fetch_user_image",
-        description="Called when the user asks you to see them, look at them, or describe what you see in the camera feed.",
-        properties={
-            "user_id": {
-                "type": "string",
-                "description": "The ID of the user to grab the image from. You must use the user ID provided in the system prompt.",
-            },
-            "question": {
-                "type": "string",
-                "description": "The question that the user is asking about the image. Default to 'Describe what you see'.",
-            },
-            "video_source": {
-                "type": "string",
-                "enum": ["camera", "screenVideo"],
-                "description": "The source of the image. Use 'camera' to see the user or 'screenVideo' to see their shared screen/browser tab.",
-            },
-        },
-        required=["user_id"],
-    )
-    tools = ToolsSchema(standard_tools=[fetch_image_function])
+    tools = ToolsSchema(standard_tools=tool_schemas)
 
     messages = [
         {
